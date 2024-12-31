@@ -1,0 +1,177 @@
+Certainly! Below is an updated version of the PHP code that saves user feedback in a MySQL database. Make sure to replace the database connection details with your own.
+
+```php
+<?php
+// Function to save user feedback to a database
+function saveFeedbackToDatabase($feedback) {
+    $servername = "localhost";
+    $username = "your_username";
+    $password = "your_password";
+    $dbname = "your_database";
+
+    // Create connection
+    $conn = new mysqli($servername, $username, $password, $dbname);
+
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    // Escape special characters to prevent SQL injection
+    $escapedFeedback = $conn->real_escape_string($feedback);
+
+    // Prepare and execute SQL statement to insert feedback into the database
+    $stmt = $conn->prepare("INSERT INTO feedback (timestamp, message) VALUES (NOW(), ?)");
+    $stmt->bind_param("s", $escapedFeedback);
+    $stmt->execute();
+
+    // Close the connection
+    $stmt->close();
+    $conn->close();
+}
+
+// Function to retrieve and display feedback from the database
+function displayFeedbackFromDatabase() {
+    $servername = "localhost";
+    $username = "your_username";
+    $password = "your_password";
+    $dbname = "your_database";
+
+    // Create connection
+    $conn = new mysqli($servername, $username, $password, $dbname);
+
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    // Prepare and execute SQL statement to retrieve feedback from the database
+    $result = $conn->query("SELECT timestamp, message FROM feedback ORDER BY timestamp DESC");
+
+    // Display feedback
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            echo $row["timestamp"] . ": " . $row["message"] . "<br>";
+        }
+    } else {
+        echo 'No feedback available.';
+    }
+
+    // Close the connection
+    $conn->close();
+}
+
+// Sample usage
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['feedback'])) {
+    $userFeedback = htmlspecialchars($_POST['feedback']);
+    saveFeedbackToDatabase($userFeedback);
+    echo 'Feedback saved successfully.';
+}
+
+// Sample form for users to submit feedback
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>User Feedback</title>
+</head>
+<body>
+    <form method="post" action="">
+        <label for="feedback">Your Feedback:</label>
+        <textarea name="feedback" id="feedback" required></textarea>
+        <button type="submit">Submit Feedback</button>
+    </form>
+
+    <hr>
+
+    <h2>Admin View - User Feedback</h2>
+    <?php
+    // Display feedback from the database to admin
+    displayFeedbackFromDatabase();
+    ?>
+</body>
+</html>
+```
+
+This code assumes you have a MySQL database set up with a table named `feedback` having columns `timestamp` and `message`. Adjust the database connection details and table structure based on your specific setup.Certainly! Below is an example of a PHP code that provides a search button for the admin, and the search results are displayed on the same page. This example assumes you have a MySQL database with a table named `feedback` having columns `timestamp` and `message`. Adjust the database connection details and table structure based on your specific setup.
+
+```php
+<?php
+// Function to retrieve and display feedback from the database
+function displayFeedbackFromDatabase($searchTerm = null) {
+    $servername = "localhost";
+    $username = "your_username";
+    $password = "your_password";
+    $dbname = "your_database";
+
+    // Create connection
+    $conn = new mysqli($servername, $username, $password, $dbname);
+
+    // Check connection
+    if ($conn->connect_error) {
+        die("Connection failed: " . $conn->connect_error);
+    }
+
+    // Prepare and execute SQL statement to retrieve feedback from the database
+    $sql = "SELECT timestamp, message FROM feedback";
+   
+    // Add search condition if a search term is provided
+    if ($searchTerm !== null) {
+        $escapedSearchTerm = $conn->real_escape_string($searchTerm);
+        $sql .= " WHERE message LIKE '%$escapedSearchTerm%'";
+    }
+
+    $sql .= " ORDER BY timestamp DESC";
+
+    $result = $conn->query($sql);
+
+    // Display feedback
+    if ($result->num_rows > 0) {
+        while ($row = $result->fetch_assoc()) {
+            echo $row["timestamp"] . ": " . $row["message"] . "<br>";
+        }
+    } else {
+        echo 'No feedback available.';
+    }
+
+    // Close the connection
+    $conn->close();
+}
+
+// Sample usage for searching
+if ($_SERVER['REQUEST_METHOD'] === 'POST' && isset($_POST['search'])) {
+    $searchTerm = htmlspecialchars($_POST['search']);
+} else {
+    $searchTerm = null;
+}
+
+// Sample form for admin to search feedback
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Admin Search</title>
+</head>
+<body>
+    <form method="post" action="">
+        <label for="search">Search Feedback:</label>
+        <input type="text" name="search" id="search" value="<?= $searchTerm ?>">
+        <button type="submit">Search</button>
+    </form>
+
+    <hr>
+
+    <h2>Admin View - User Feedback</h2>
+    <?php
+    // Display feedback from the database based on the search term
+    displayFeedbackFromDatabase($searchTerm);
+    ?>
+</body>
+</html>
+```
+
+This code includes a search form for the admin to enter a search term. The search results are then displayed on the same page. Adjust the form and display as needed for your specific requirements.
